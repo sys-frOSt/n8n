@@ -2461,6 +2461,32 @@ describe('workflows tool', () => {
 				expect(result).toMatchObject({ success: true, deferred: true });
 			});
 
+			it('preserves preferNewCredentials when user declines setup with existing credential', async () => {
+				// When the user requested fresh credentials via preferNewCredentials and then
+				// declines setup, the re-analysis in the decline flow must carry the preference
+				// so it doesn't silently revert to auto-applying an existing credential.
+				(analyzeWorkflow as Mock).mockResolvedValue([slackRequest]);
+				const context = createGrantAwareContext();
+
+				const tool = createWorkflowsTool(context, 'full');
+				await executeTool(
+					tool,
+					{ action: 'setup', workflowId: 'wf1', preferNewCredentials: ['slackApi'] },
+					{ resumeData: { approved: false } } as never,
+				);
+
+				// The decline flow re-analyzes; verify it was called with preferNewCredentialTypes
+				expect(analyzeWorkflow).toHaveBeenCalledWith(
+					context,
+					'wf1',
+					undefined,
+					expect.objectContaining({ preferNewCredentialTypes: ['slackApi'] }),
+				);
+				expect(context.grantSessionToolApproval).toHaveBeenCalledWith(
+					'workflows:setup-skip:cred:slackApi',
+				);
+			});
+
 			it('separates a card the user skipped from one that is merely unconfigured', async () => {
 				// The Slack card was dismissed; the Sheets one was left half-filled. Reporting both
 				// as "still need configuration" is what made the agent re-open setup.

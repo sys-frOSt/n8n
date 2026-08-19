@@ -107,6 +107,7 @@ function makeStepStore(
 		// far from settled, so finish tests opt in explicitly
 		countSettledSteps: vi.fn().mockResolvedValue(0),
 		hasFailedSteps: vi.fn().mockResolvedValue(false),
+		hasQueuedOrRunningSteps: vi.fn().mockResolvedValue(false),
 		...overrides,
 	} satisfies StepStore;
 }
@@ -451,6 +452,43 @@ describe('StepSettledHandler', () => {
 
 		// 'a' fanned out to b and c, so the execution is provably unfinished
 		expect(stepStore.countSettledSteps).not.toHaveBeenCalled();
+		expect(executionStore.finishExecution).not.toHaveBeenCalled();
+	});
+
+	it('does not finish when all reachable nodes settled but a queued loop iteration remains', async () => {
+		// A loop with an independent branch: trigger -> a (loop) -> b, and trigger -> c.
+		// Scenario: a@0 settled, c settled, a@1 queued. All three reachable nodes (a, b, c)
+		// have at least one settled row, but a@1 is queued and has not run yet. The execution
+		// must remain running until a@1 settles.
+		const loopGraph: WorkflowGraph = {
+			nodes: [
+				{ id: 'trigger', name: 'T', type: 'trigger' },
+				{ id: 'a', name: 'A', type: 'v1-node' },
+				{ id: 'b', name: 'B', type: 'v1-node' },
+				{ id: 'c', name: 'C', type: 'v1-node' },
+			],
+			edges: [
+				{ from: 'trigger', to: 'a', outputIndex: 0, inputIndex: 0 },
+				{ from: 'a', to: 'b', outputIndex: 0, inputIndex: 0 },
+				{ from: 'trigger', to: 'c', outputIndex: 0, inputIndex: 0 },
+			],
+		};
+		// countSettledSteps = 4: trigger, a@0, b@0, c all settled (4 reachable nodes)
+		// but a@1 is queued, so hasQueuedOrRunningSteps = true
+		const stepStore = makeStepStore(
+			{ id: 'step-c', nodeId: 'c' },
+			{
+				countSettledSteps: vi.fn().mockResolvedValue(4),
+				hasQueuedOrRunningSteps: vi.fn().mockResolvedValue(true),
+			},
+		);
+		const executionStore = makeExecutionStore({ graph: loopGraph });
+		const { handler } = makeHandler(stepStore, { executionStore });
+
+		await handler.handle({ ...event, stepId: 'step-c' });
+
+		expect(stepStore.countSettledSteps).toHaveBeenCalled();
+		expect(stepStore.hasQueuedOrRunningSteps).toHaveBeenCalledWith('exec-1');
 		expect(executionStore.finishExecution).not.toHaveBeenCalled();
 	});
 });

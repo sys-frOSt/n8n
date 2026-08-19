@@ -146,10 +146,18 @@ export class StepSettledHandler {
 	 * unique per node, only exist for reachable nodes, and never unsettle, so
 	 * the count comparison cannot pass early — in-flight events and unplanned
 	 * successors both leave reachable nodes unsettled.
+	 *
+	 * Loop-aware: also checks that no queued or running steps remain, including
+	 * later loop iterations, since a loop can have multiple step rows per node.
 	 */
 	private async finishExecutionIfDone(execution: ExecutionRecord): Promise<void> {
 		const settled = await this.stepStore.countSettledSteps(execution.id);
 		if (settled < this.reachableNodeCount(execution)) return;
+
+		// With loops, multiple iterations of the same node can exist, so we
+		// must also ensure no queued or running steps remain beyond the settled count.
+		const hasUnfinishedWork = await this.stepStore.hasQueuedOrRunningSteps(execution.id);
+		if (hasUnfinishedWork) return;
 
 		const failed = await this.stepStore.hasFailedSteps(execution.id);
 		await this.executionStore.finishExecution(execution.id, failed ? 'failed' : 'completed');

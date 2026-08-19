@@ -66,6 +66,10 @@ describe('@PolicyCheck decorator', () => {
 		Container.set(PolicyCheckMetadata, metadata);
 	});
 
+	afterEach(() => {
+		Container.reset();
+	});
+
 	it('should register the decorated class and make it DI-resolvable', () => {
 		@PolicyCheck()
 		class TestCheck implements RegisteredPolicyCheck {

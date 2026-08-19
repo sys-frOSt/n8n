@@ -1162,9 +1162,9 @@ async function handleSetup(
 		// Re-analyze rather than remembering what was suspended: the closure state doesn't
 		// survive a resume in another process, and a skip that silently fails to persist is
 		// the whole bug. Everything still needing setup is what the user just dismissed.
-		const dismissed = (await analyzeWorkflow(context, input.workflowId)).filter(
-			(request) => request.needsAction,
-		);
+		const dismissed = (
+			await analyzeWorkflow(context, input.workflowId, undefined, preferNewCredentialOptions(input))
+		).filter((request) => request.needsAction);
 		await rememberSkippedSetup(context, dismissed, input.workflowId);
 		return {
 			success: true,

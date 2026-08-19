@@ -154,4 +154,11 @@ export interface StepStore {
 
 	/** Whether any of the execution's steps failed. */
 	hasFailedSteps(executionId: string): Promise<boolean>;
+
+	/**
+	 * Whether the execution has any queued or running steps, including later
+	 * loop iterations. Used to ensure the execution doesn't complete while
+	 * work remains.
+	 */
+	hasQueuedOrRunningSteps(executionId: string): Promise<boolean>;
 }

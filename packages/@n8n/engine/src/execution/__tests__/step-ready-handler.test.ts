@@ -8,16 +8,21 @@ import { stepKeyId, type StepSlots, type StepStatus } from '../execution.types';
 import { StepReadyHandler } from '../step-ready-handler';
 import type { StepRecord, StepStore } from '../step-store';
 
-/** Key for a `loadStepsByKeys` result at iteration 0, as the handler requests them. */
-const at = (nodeId: string) => stepKeyId({ nodeId, iteration: 0 });
+/** Key for a `loadStepsByKeys` result at the given iteration, as the handler requests them. */
+const at = (nodeId: string, iteration = 0) => stepKeyId({ nodeId, iteration });
 
-/** A predecessor row as `loadStepsByKeys` returns it, keyed at iteration 0. */
-function stepRow(nodeId: string, status: StepStatus, outputs: StepSlots | null = null): StepRecord {
+/** A predecessor row as `loadStepsByKeys` returns it, keyed at the given iteration. */
+function stepRow(
+	nodeId: string,
+	status: StepStatus,
+	outputs: StepSlots | null = null,
+	iteration = 0,
+): StepRecord {
 	return {
-		id: `step-${nodeId}`,
+		id: `step-${nodeId}-${iteration}`,
 		executionId: 'exec-1',
 		nodeId,
-		iteration: 0,
+		iteration,
 		status,
 		outputs,
 		error: null,
@@ -161,6 +166,32 @@ describe('StepReadyHandler', () => {
 		]);
 		expect(executor.execute).toHaveBeenCalledWith(
 			expect.objectContaining({ inputs: [[{ json: { from: 'a' } }]] }),
+		);
+	});
+
+	it('reads iteration-specific outputs when running a step at iteration > 0', async () => {
+		const executor = makeExecutor();
+		// step 'b' at iteration 1, whose only predecessor is 'a' at iteration 1
+		const stepStore = makeStepStore(
+			{ id: 'step-b-1', nodeId: 'b', iteration: 1 },
+			{
+				loadStepsByKeys: vi.fn().mockResolvedValue({
+					[at('a', 0)]: stepRow('a', 'completed', [[{ json: { from: 'a@0' } }]], 0),
+					[at('a', 1)]: stepRow('a', 'completed', [[{ json: { from: 'a@1' } }]], 1),
+				}),
+			},
+		);
+		const handler = new StepReadyHandler(makeExecutionStore(), stepStore, makeQueue(), {
+			v1StepExecutor: executor,
+		});
+
+		await handler.handle({ ...event, stepId: 'step-b-1' });
+
+		expect(stepStore.loadStepsByKeys).toHaveBeenCalledWith('exec-1', [
+			{ nodeId: 'a', iteration: 1 },
+		]);
+		expect(executor.execute).toHaveBeenCalledWith(
+			expect.objectContaining({ inputs: [[{ json: { from: 'a@1' } }]] }),
 		);
 	});
 
