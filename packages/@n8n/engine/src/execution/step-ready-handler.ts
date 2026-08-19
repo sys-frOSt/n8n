@@ -172,9 +172,13 @@ function validateIncomingEdges(incomingEdges: GraphEdge[], step: StepRecord): vo
 }
 
 /**
- * The value an edge delivers: the source's output slot for a completed
- * predecessor, `null` for a dead edge (predecessor settled without completing,
- * or left the slot unfilled).
+ * Reads the value supplied by an incoming edge from its predecessor step.
+ *
+ * @param edge - The incoming edge identifying the predecessor node and output slot
+ * @param step - The current step whose iteration determines the predecessor
+ * @param predecessorSteps - Predecessor steps indexed by node and iteration
+ * @returns The predecessor's output value, or `null` when the predecessor did not complete or the output slot is empty
+ * @throws `UnexpectedError` if the predecessor step is missing or has not settled
  */
 function readEdgeValue(
 	edge: GraphEdge,

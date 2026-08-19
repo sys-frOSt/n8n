@@ -8,9 +8,10 @@ const log = createLogger('document-prep');
 const EVALUATE_TIMEOUT_MS = 5_000;
 
 /**
- * Runs in the page context, once per document. Not covered: a field that only becomes eligible
- * via a later attribute change, a shadow root attached after its host was observed, and child
- * frames of a document that was already loaded when we attached.
+ * Applies vendor-specific opt-out attributes to supported page elements.
+ *
+ * Preserves existing attributes and observes the document and discovered shadow roots
+ * so newly added elements are processed.
  */
 export function applyOptOutAttributes(): void {
 	const groups: Array<{ selector: string; attributes: Array<[string, string]> }> = [
@@ -40,10 +41,22 @@ export function applyOptOutAttributes(): void {
 		},
 	];
 
+	/**
+	 * Determines whether a node is an element.
+	 *
+	 * @param node - The node to inspect
+	 * @returns `true` if the node is an element, `false` otherwise.
+	 */
 	function isElement(node: Node): node is Element {
 		return node.nodeType === 1;
 	}
 
+	/**
+	 * Determines whether a value is a `WeakSet` containing nodes.
+	 *
+	 * @param value - The value to check
+	 * @returns `true` if the value is a `WeakSet`, `false` otherwise
+	 */
 	function isRegistry(value: unknown): value is WeakSet<Node> {
 		return value instanceof WeakSet;
 	}
@@ -54,12 +67,23 @@ export function applyOptOutAttributes(): void {
 	const observed = isRegistry(existing) ? existing : new WeakSet<Node>();
 	if (!isRegistry(existing)) Reflect.set(window, REGISTRY, observed);
 
+	/**
+	 * Adds the specified attributes to an element when they are absent.
+	 *
+	 * @param element - The element to update
+	 * @param attributes - The attribute names and values to apply
+	 */
 	function setAttrs(element: Element, attributes: Array<[string, string]>): void {
 		for (const [name, value] of attributes) {
 			if (!element.hasAttribute(name)) element.setAttribute(name, value);
 		}
 	}
 
+	/**
+	 * Applies opt-out attributes to matching elements and their descendant shadow roots.
+	 *
+	 * @param root - The document, shadow root, or element to process
+	 */
 	function mark(root: Document | ShadowRoot | Element): void {
 		for (const { selector, attributes } of groups) {
 			if (isElement(root) && root.matches(selector)) setAttrs(root, attributes);
@@ -78,6 +102,11 @@ export function applyOptOutAttributes(): void {
 		observe(element.shadowRoot);
 	}
 
+	/**
+	 * Observes a document or shadow root and applies opt-out attributes to newly added elements.
+	 *
+	 * @param root - The document or shadow root to observe
+	 */
 	function observe(root: Document | ShadowRoot): void {
 		if (observed.has(root)) return;
 		observed.add(root);

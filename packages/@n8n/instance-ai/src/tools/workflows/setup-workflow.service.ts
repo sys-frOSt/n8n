@@ -473,8 +473,13 @@ async function filterTemplatedCredentialsByServiceHost(
 }
 
 /**
- * For a single credential type, list existing credentials (cached + workflow-scoped),
- * decide whether to auto-apply the sole candidate, and test the resolved credential.
+ * Resolves the available credential state for a node and credential type.
+ *
+ * @param node - The node whose credential assignments and service host determine the applicable credentials
+ * @param credentialType - The credential type to resolve
+ * @param workflowId - The workflow scope for credential lookup
+ * @param prefersNewCredential - Whether to prevent automatic application of existing credentials
+ * @returns The available credentials, resolved assignment, automatic-application status, and test result when applicable
  */
 async function resolveCredentialState(
 	context: InstanceAiContext,
@@ -629,7 +634,14 @@ function buildRequestCredentials(
  * tests testable credentials, determines trigger eligibility, and
  * computes parameter issues with editable parameter definitions.
  */
-/** Resolve credential state for a type and auto-apply the sole candidate onto nodeCredentials. */
+/**
+ * Resolves credential state and applies an automatically selected credential to the node credentials.
+ *
+ * @param credentialType - The credential type to resolve, if available
+ * @param nodeCredentials - The credentials object to update when a credential is auto-applied
+ * @param prefersNewCredential - Whether to avoid automatically reusing an existing credential
+ * @returns The resolved credential state
+ */
 async function resolveAppliedCredentialState(
 	context: InstanceAiContext,
 	node: NodeJSON,
@@ -680,9 +692,11 @@ interface NodeSetupContext {
 }
 
 /**
- * Build a single setup request for one (optional) credential type: resolve and
- * auto-apply credentials, decide whether user action is still needed, and assemble
- * the request. Returns null when the request carries nothing actionable.
+ * Builds a setup request for a node and optional credential type, including credential, parameter, and trigger state that may require user action.
+ *
+ * @param credentialType - The credential type to resolve, or `undefined` for a trigger- or parameter-only request.
+ * @param preferNewCredentialTypes - Credential types that should prefer creating a new credential over automatic reuse.
+ * @returns A setup request, or `null` when the node has no actionable setup information.
  */
 async function buildRequestForCredentialType(
 	context: InstanceAiContext,
@@ -802,6 +816,16 @@ async function buildRequestForCredentialType(
 	};
 }
 
+/**
+ * Builds actionable setup requests for a workflow node.
+ *
+ * @param node - The node to analyze.
+ * @param triggerTestResult - The result of testing the node's trigger, when available.
+ * @param cache - Shared caches used during credential resolution.
+ * @param workflowId - The workflow identifier used to scope credential resolution.
+ * @param preferNewCredentialTypes - Credential types for which new credentials should be preferred over automatic reuse.
+ * @returns Setup requests describing required credential, trigger, or parameter actions.
+ */
 export async function buildSetupRequests(
 	context: InstanceAiContext,
 	node: NodeJSON,
@@ -1453,8 +1477,12 @@ export function buildSubnodeToRootNodeMap(
 // ── Full workflow analysis ──────────────────────────────────────────────────
 
 /**
- * Analyze all nodes in a workflow and produce sorted setup requests.
- * This is the main entry point — combines buildSetupRequests + sort + filter.
+ * Analyzes a workflow and returns actionable setup requests in execution order.
+ *
+ * @param workflowId - The ID of the workflow to analyze
+ * @param triggerResults - Optional results from testing the workflow's trigger nodes
+ * @param options - Optional filtering and credential-creation preferences
+ * @returns The workflow's setup requests, including sub-node grouping metadata
  */
 export async function analyzeWorkflow(
 	context: InstanceAiContext,

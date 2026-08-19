@@ -28,6 +28,12 @@ export function makeSetupRequest(
 		},
 	};
 }
+/**
+ * Creates a workflow setup section with default HTTP Request node and HTTP Basic Auth credential settings.
+ *
+ * @param overrides - Values that replace the default section, credential, and node settings.
+ * @returns The configured workflow setup section.
+ */
 export function makeWorkflowSetupSection(
 	overrides: Omit<Partial<WorkflowSetupSection>, 'node'> & {
 		node?: Partial<WorkflowSetupSection['node']>;

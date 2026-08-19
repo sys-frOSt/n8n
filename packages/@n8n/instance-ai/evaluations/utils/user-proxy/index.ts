@@ -489,10 +489,9 @@ function extractRequestId(event: CapturedEvent): string | undefined {
 }
 
 /**
- * Workflow setup wizard shows one `setupRequests[]` entry per (node,
- * credentialType) combo, plus a separate param-only entry — so a node needing
- * both a credential and parameter fixes can appear across multiple entries.
- * Group by node name/id and merge each field in as encountered.
+ * Extracts and merges setup wizard requests into per-node parsing context.
+ *
+ * @returns The parsed setup context with parameter and credential requests for each node, or `undefined` when no valid setup requests are present.
  */
 function extractSetupWizardParseContext(event: CapturedEvent): SetupWizardParseContext | undefined {
 	const payload = getEventPayload(event);

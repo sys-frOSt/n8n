@@ -6,12 +6,11 @@ import { getDescendantNodeIds } from './workflow-graph-queries';
 export const MAX_SLOT_INDEX = 100;
 
 /**
- * Asserts the graph is one the engine is willing to execute, before any state
- * is created for it. The single place executability rules live; new rules are
- * added here as they arise.
+ * Validates that a workflow graph is executable by the engine.
  *
- * Throws `GraphValidationError` for graphs that can never run, and
- * `UnimplementedError` for shapes the engine doesn't support yet.
+ * @param graph - The workflow graph to validate
+ * @throws `GraphValidationError` If the graph has an invalid trigger structure, unreachable dependency, or slot index.
+ * @throws `UnimplementedError` If the graph contains loops or converging edges that are not supported.
  */
 export function validateExecutableGraph(graph: WorkflowGraph): void {
 	const triggers = graph.nodes.filter((node) => node.type === 'trigger');

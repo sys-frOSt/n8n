@@ -39,9 +39,12 @@ export interface SuccessorDecisions {
 }
 
 /**
- * Decides the direct successors of the settled step (rules 2–4). `steps`
- * holds the existing rows for those successors and their predecessors, keyed
- * by `stepKeyId`, including the settled step itself.
+ * Determines which direct successors of a settled step should be queued or skipped.
+ *
+ * @param graph - The workflow graph containing the settled step and its successors
+ * @param settled - The settled step whose successors are evaluated
+ * @param steps - Existing step summaries keyed by step identifier
+ * @returns Successors grouped into steps to queue and steps to skip
  */
 export function decideSuccessors(
 	graph: WorkflowGraph,
@@ -60,7 +63,12 @@ export function decideSuccessors(
 	return decisions;
 }
 
-/** One candidate's fate under rules 2–3; undecidable while a predecessor is unsettled. */
+/**
+ * Determines whether a candidate step should be queued, skipped, or deferred.
+ *
+ * @param candidate - The candidate step and its iteration.
+ * @returns `queued` if a live incoming edge exists, `skipped` if all incoming edges are dead, or `undecidable` if any predecessor is unsettled.
+ */
 function decideNodeFate(
 	graph: WorkflowGraph,
 	candidate: StepKey,
@@ -79,7 +87,13 @@ function decideNodeFate(
 		: 'skipped';
 }
 
-/** Rule 2. A slot beyond the produced list reads undefined — dead, like null. */
+/**
+ * Determines whether an edge carries a live value for an iteration.
+ *
+ * @param iteration - The iteration in which to resolve the edge's source step
+ * @param steps - Settled step summaries keyed by step ID
+ * @returns `true` if the source completed and its referenced output slot is truthy, `false` otherwise
+ */
 function isLiveEdge(
 	edge: GraphEdge,
 	iteration: number,

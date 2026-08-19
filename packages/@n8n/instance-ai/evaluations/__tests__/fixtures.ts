@@ -29,6 +29,12 @@ export function agentNode(overrides: Partial<InstanceAiAgentNode> = {}): Instanc
 	};
 }
 
+/**
+ * Creates a completed assistant message containing the supplied agent tree.
+ *
+ * @param agentTree - The agent tree associated with the message
+ * @returns A non-streaming assistant message with empty content and reasoning
+ */
 export function assistantMessage(agentTree: InstanceAiAgentNode): InstanceAiMessage {
 	return {
 		id: 'msg-1',
@@ -41,6 +47,13 @@ export function assistantMessage(agentTree: InstanceAiAgentNode): InstanceAiMess
 	};
 }
 
+/**
+ * Creates an inactive workflow fixture with optional property overrides.
+ *
+ * @param id - The workflow identifier used to populate the workflow and version IDs
+ * @param overrides - Workflow properties that replace the default fixture values
+ * @returns A workflow response fixture
+ */
 export function workflow(id: string, overrides: Partial<WorkflowResponse> = {}): WorkflowResponse {
 	return {
 		id,

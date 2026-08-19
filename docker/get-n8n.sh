@@ -193,6 +193,7 @@ resolve_n8n_version() {
 	fi
 }
 
+# write_env creates the n8n environment configuration file with generated secrets and owner-only permissions.
 write_env() {
 	sandbox_api_key="$(gen_secret)"
 	runner_key="$(gen_secret)"
@@ -356,6 +357,7 @@ wait_for_n8n() {
 	return 1
 }
 
+# print_summary prints installation details, management commands, security guidance, and production hosting documentation.
 print_summary() {
 	cat <<EOF
 

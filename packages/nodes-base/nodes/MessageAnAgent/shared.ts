@@ -489,6 +489,13 @@ function getAgentSource(ctx: IExecuteFunctions, itemIndex: number): ExecuteAgent
  */
 const SESSION_ID_MAX_LENGTH = 74;
 
+/**
+ * Validates that a session ID does not exceed the supported length.
+ *
+ * @param ctx - The execution context used to report validation errors
+ * @param sessionId - The session ID to validate
+ * @param itemIndex - The index of the input item associated with the session ID
+ */
 function validateSessionIdLength(ctx: IExecuteFunctions, sessionId: string, itemIndex: number) {
 	if (sessionId.length > SESSION_ID_MAX_LENGTH) {
 		throw new NodeOperationError(
@@ -500,10 +507,10 @@ function validateSessionIdLength(ctx: IExecuteFunctions, sessionId: string, item
 }
 
 /**
- * Resolve the session ID the way the Simple Memory node does: read `sessionId`
- * from the input item, falling back to the Chat Trigger node's output. Returns
- * `undefined` when neither resolves (e.g. the workflow has no Chat Trigger),
- * letting the engine fall back to a per-execution session.
+ * Resolves a chat session identifier from the input item or connected Chat Trigger.
+ *
+ * @param itemIndex - Index of the input item to evaluate
+ * @returns The trimmed session identifier, a SHA-256 hash when it exceeds the maximum length, or `undefined` when no valid identifier is available
  */
 function getChatSessionId(ctx: IExecuteFunctions, itemIndex: number): string | undefined {
 	let sessionId: unknown;
@@ -540,10 +547,10 @@ function getChatSessionId(ctx: IExecuteFunctions, itemIndex: number): string | u
 }
 
 /**
- * Session resolution for typeVersion >= 3.1, mirroring the Simple Memory node:
- * a custom key when "Define below" is selected, otherwise the connected Chat
- * Trigger's session. The Session settings default to `fromInput` even when the
- * option was never added, so a Chat Trigger works out of the box.
+ * Resolves the session identifier for the current input item.
+ *
+ * @param itemIndex - The index of the input item whose session settings are read
+ * @returns The configured custom session identifier or the connected chat session identifier, or `undefined` when none is available
  */
 function resolveSessionId(ctx: IExecuteFunctions, itemIndex: number): string | undefined {
 	const session = ctx.getNodeParameter('advanced.session.session', itemIndex, {}) as {
@@ -560,7 +567,11 @@ function resolveSessionId(ctx: IExecuteFunctions, itemIndex: number): string | u
 	return getChatSessionId(ctx, itemIndex);
 }
 
-/** Shared execution for every version. */
+/**
+ * Executes the configured agent for the input items and returns its responses, structured output, usage, tool calls, finish reason, and session data.
+ *
+ * @returns The agent execution results, paired with their input items.
+ */
 export async function execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 	const items = this.getInputData();
 	const returnData: INodeExecutionData[] = [];

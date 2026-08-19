@@ -87,6 +87,12 @@ export function setWorkflow(assignments: Assignment[]) {
 
 type EngineDataSource = ReturnType<typeof createDataSource>;
 
+/**
+ * Creates a workflow runner for executing graphs against an engine data source.
+ *
+ * @param getDataSource - Creates the data source used for the workflow execution.
+ * @returns A function that runs a workflow graph and provides its execution and step records.
+ */
 export function makeRunWorkflow(getDataSource: () => EngineDataSource) {
 	return async function runWorkflow(graph: WorkflowGraph, triggerOutputs: TriggerOutputs | null) {
 		const dataSource = getDataSource();

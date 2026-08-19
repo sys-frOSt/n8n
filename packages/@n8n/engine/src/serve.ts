@@ -5,6 +5,11 @@ import { AllowAllAdmittance } from './admittance';
 import { createDataSource } from './database';
 import { createEngineRuntime } from './runtime';
 
+/**
+ * Starts the engine runtime and HTTP server, and registers graceful shutdown handlers.
+ *
+ * @throws An error if the database URL is not configured.
+ */
 async function main(): Promise<void> {
 	const config = Container.get(EngineConfig);
 

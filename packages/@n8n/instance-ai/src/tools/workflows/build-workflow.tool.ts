@@ -343,6 +343,12 @@ function directPostBuildFlowHandoff(
 	};
 }
 
+/**
+ * Creates the `build-workflow` tool for compiling and saving workflow source files.
+ *
+ * @param context - Runtime services and configuration used to build, validate, and persist workflows
+ * @returns The configured `build-workflow` tool
+ */
 export function createBuildWorkflowTool(context: InstanceAiContext) {
 	const failureTracker = new BuildFailureTracker();
 

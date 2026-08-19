@@ -16,7 +16,11 @@ export interface WorkflowLoop {
 	exitEdges: GraphEdge[];
 }
 
-/** One loop per back-edge target, members from the full graph's SCCs. */
+/**
+ * Derives loop metadata from the graph's marked back-edges.
+ *
+ * @returns One `WorkflowLoop` for each unique back-edge target, including its strongly connected members, back-edges, entry edges, and exit edges.
+ */
 export function deriveLoops(graph: WorkflowGraph): WorkflowLoop[] {
 	const backEdgeTargets = [...new Set(graph.edges.filter((e) => e.isBackEdge).map((e) => e.to))];
 	if (backEdgeTargets.length === 0) return [];
@@ -40,8 +44,11 @@ export function deriveLoops(graph: WorkflowGraph): WorkflowLoop[] {
 }
 
 /**
- * Strongly connected components over `edges`, as a node -> members map. A node
- * on no cycle maps to a singleton. Tarjan's algorithm.
+ * Groups each graph node with the nodes in its strongly connected component.
+ *
+ * @param graph - The graph whose nodes are analyzed
+ * @param edges - The edges used to determine component connectivity
+ * @returns A map from each node ID to its strongly connected component, including singleton components
  */
 function computeSccMembership(graph: WorkflowGraph, edges: GraphEdge[]): Map<string, Set<string>> {
 	const outgoing = new Map<string, GraphEdge[]>();
@@ -93,6 +100,13 @@ function computeSccMembership(graph: WorkflowGraph, edges: GraphEdge[]): Map<str
 	return membership;
 }
 
+/**
+ * Determines whether a set of graph nodes forms a cycle.
+ *
+ * @param members - The nodes in the component being evaluated
+ * @param edges - The edges to inspect for a self-loop
+ * @returns `true` if the component contains multiple nodes or a self-loop, `false` otherwise
+ */
 function isCyclic(members: Set<string>, edges: GraphEdge[]): boolean {
 	if (members.size > 1) return true;
 	const [only] = members;
@@ -100,20 +114,16 @@ function isCyclic(members: Set<string>, edges: GraphEdge[]): boolean {
 }
 
 /**
- * Structural rules for loop shapes:
+ * Validates that workflow loops conform to the supported structural rules.
  *
- * 1. Remove the marked back-edges and what remains is acyclic. Termination and
- *    sequential iterations both rely on a loop body being a DAG.
- * 2. A back-edge starts inside its loop and returns to the batch node's input
- *    slot 0.
- * 3. A batch node has exactly one incoming back-edge. With none, the loop can
- *    never advance. With several, returns converge on one input slot.
- * 4. Edges into a batch node feed input slot 0. Edges out of it leave output
- *    slot 0 (done) or output slot 1 (loop).
- * 5. The batch node is the loop's only boundary. Nothing enters the body except
- *    through it, no loop nests inside it, the done slot feeds no member (a node
- *    cannot run both per iteration and after the loop), and the only edge
- *    leaving the member set is the one from that done slot.
+ * Loop bodies must be acyclic after removing marked back-edges, return through
+ * batch-node input slot `0`, and use the batch node as their sole boundary.
+ * Batch nodes must have exactly one return edge, and nested loops or converging
+ * entries are unsupported.
+ *
+ * @throws GraphValidationError If the graph contains invalid references,
+ * cycles, slots, boundaries, or back-edge structure.
+ * @throws UnimplementedError If the graph uses an unsupported loop shape.
  */
 export function validateLoops(graph: WorkflowGraph): void {
 	const namesById = new Map(graph.nodes.map((node) => [node.id, node.name]));

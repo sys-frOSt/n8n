@@ -3,14 +3,13 @@ import type { ExecutionStore, StepSlots, StepStore } from '@n8n/engine';
 import type { StepData, StepDataLoader } from './types';
 
 /**
- * A `StepDataLoader` backed by the engine's own stores: the graph off the
- * execution row, the outputs of every completed step off the step rows.
- * Loads everything. TODO(CAT-3017): load selectively, based on what the
- * step's expressions actually reference.
+ * Creates a step data loader backed by the execution and step stores.
  *
- * Steps that haven't completed are omitted rather than mapped to null, so
- * expressions referencing them fail with the standard "hasn't been executed"
- * error.
+ * The loader retrieves the execution graph and outputs for completed steps with
+ * non-null outputs. Unfinished steps are omitted so references to them produce
+ * the standard "hasn't been executed" error.
+ *
+ * @returns A loader that provides the execution graph and step outputs indexed by node ID.
  */
 export function createEngineStepDataLoader(
 	executionStore: ExecutionStore,

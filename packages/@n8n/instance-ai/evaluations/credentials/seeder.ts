@@ -124,14 +124,12 @@ export interface CreatedCredential {
 }
 
 /**
- * Create a single credential of the given type. Throws on an unknown type and
- * on creation failure — callers decide what a failure means for their flow
- * (declared-credential seeding fails the build; a mid-run "create" decision
- * falls back to decline, see `user-proxy/tools.ts`).
+ * Creates a credential from a supported template.
  *
- * `usedNames` de-dupes display names across calls that share it (e.g. every
- * declared credential in one `createDeclaredCredentials` batch) by appending
- * `#2`, `#3`, ... — pass a fresh `Map` for an unrelated, independent batch.
+ * @param usedNames - Shared name counter used to make credential names unique across calls.
+ * @param options - Optional logger and custom-auth setup hint.
+ * @returns The created credential's ID, resolved name, and type.
+ * @throws If the credential type is unsupported or creation fails.
  */
 export async function createOneCredential(
 	client: N8nClient,
@@ -169,11 +167,13 @@ export async function createOneCredential(
 }
 
 /**
- * Mint an `httpTemplatedCustomAuth` ("Simplified Custom Auth") credential from
- * a setup card's recipe. Unlike the 14 types above, this type has no fixed
- * field shape — the AI builder researches it at runtime per service — so there
- * is no `CREDENTIAL_TEMPLATES` entry to look up; the recipe carried on
- * `options.setupHint` is the only source of the data to persist.
+ * Creates an `httpTemplatedCustomAuth` credential from a runtime setup recipe.
+ *
+ * @param name - The requested credential name.
+ * @param usedNames - Names already assigned in the current credential batch.
+ * @param options - Optional setup hint and logger configuration.
+ * @throws If no setup hint is provided.
+ * @returns The created credential's ID, resolved name, and type.
  */
 async function createTemplatedCustomAuthCredential(
 	client: N8nClient,
