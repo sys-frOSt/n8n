@@ -682,7 +682,13 @@ async function runTriggerTest(
 	}
 }
 
-/** Collect nodes whose applied credential failed its test, so they move from completed to failed. */
+/**
+ * Identifies nodes whose newly applied credentials failed testing.
+ *
+ * @param remainingRequests - Setup requests containing credential test results
+ * @param credentials - Credentials applied to each node, grouped by node name and credential type
+ * @returns Node names and error messages for failed credential tests
+ */
 function collectCredentialTestFailures(
 	remainingRequests: Awaited<ReturnType<typeof analyzeWorkflow>>,
 	credentials: Record<string, Record<string, string>> | undefined,
@@ -705,9 +711,10 @@ function collectCredentialTestFailures(
 }
 
 /**
- * Carry the "user asked for a fresh credential" types into every setup analysis
- * of this call, so no re-analysis (trigger test, apply) quietly reinstates the
- * auto-applied credential the first analysis withheld.
+ * Propagates credential types that the user explicitly requested to create fresh.
+ *
+ * @param input - Setup action input containing the requested credential types
+ * @returns Setup analysis options with the requested credential types, or an empty object when none were specified
  */
 function preferNewCredentialOptions(input: Extract<Input, { action: 'setup' }>): {
 	preferNewCredentialTypes?: readonly string[];
@@ -717,7 +724,11 @@ function preferNewCredentialOptions(input: Extract<Input, { action: 'setup' }>):
 		: {};
 }
 
-/** Setup state 3: persist setup, run the trigger, and re-suspend with the refreshed requests. */
+/**
+ * Applies setup changes, tests the selected trigger, and requests any remaining configuration.
+ *
+ * @param testTriggerNode - The trigger node to execute during testing
+ */
 async function handleSetupTestTrigger(
 	context: InstanceAiContext,
 	input: Extract<Input, { action: 'setup' }>,
@@ -816,7 +827,13 @@ async function reconcileSetupSkips(
 	);
 }
 
-/** Setup state 4: apply credentials and parameters atomically and report the outcome. */
+/**
+ * Applies submitted credentials and node parameters, then reports the resulting workflow setup state.
+ *
+ * @param state - Mutable setup state for the current workflow configuration flow
+ * @param resumeData - Credentials, parameters, and skipped nodes submitted for application
+ * @returns The application outcome, including completed, pending, skipped, or failed setup details and the updated workflow graph
+ */
 async function handleSetupApply(
 	context: InstanceAiContext,
 	input: Extract<Input, { action: 'setup' }>,
@@ -973,6 +990,12 @@ async function resolveSetupScopeNodeNames(
 	}
 }
 
+/**
+ * Configures a workflow's credentials and parameters, including optional trigger testing and deferred setup.
+ *
+ * @param input - Setup options, including the workflow, setup scope, credential hints, and approval choices
+ * @param state - State used to preserve setup information across suspended interactions
+ */
 async function handleSetup(
 	context: InstanceAiContext,
 	input: Extract<Input, { action: 'setup' }>,

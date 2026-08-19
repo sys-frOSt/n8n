@@ -1,10 +1,10 @@
 import type { WorkflowResponse } from '../clients/n8n-client';
 
 /**
- * Renders node groups for the judge. Groups persist member node *ids*, but the
- * judge context is name-keyed and never exposes ids — so members are mapped to
- * node names and stale ids are dropped, mirroring the MCP read path
- * (`toNodeGroupSummary` in packages/cli/src/modules/mcp/tools/schemas.ts).
+ * Formats workflow node groups for display.
+ *
+ * @param wf - The workflow whose node groups should be rendered
+ * @returns Lines containing the node-group section, with member IDs resolved to node names and unknown members omitted
  */
 function renderNodeGroupLines(wf: WorkflowResponse): string[] {
 	const groups = wf.nodeGroups ?? [];
@@ -32,7 +32,12 @@ function renderNodeGroupLines(wf: WorkflowResponse): string[] {
 	];
 }
 
-/** Render the per-build workflow structure: nodes, connections, all configs, node groups. */
+/**
+ * Builds a textual representation of a workflow's structure.
+ *
+ * @param wf - The workflow to represent, or `undefined` when no workflow was built
+ * @returns A formatted workflow structure containing nodes, configurations, connections, and node groups, or a no-workflow message
+ */
 export function buildWorkflowContextBlock(wf: WorkflowResponse | undefined): string {
 	if (!wf) return '## Workflow structure\n\n(no workflow built)';
 	const lines: string[] = ['## Workflow structure', ''];

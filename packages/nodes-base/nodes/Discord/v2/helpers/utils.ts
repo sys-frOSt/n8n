@@ -129,6 +129,12 @@ export function prepareOptions(options: IDataObject, guildId?: string) {
 	return options;
 }
 
+/**
+ * Prepares Discord embed objects from JSON or individual field values.
+ *
+ * @param embeds - The embed configurations to transform
+ * @returns The prepared, non-empty embed objects
+ */
 export function prepareEmbeds(this: IExecuteFunctions, embeds: IDataObject[]) {
 	return embeds
 		.map((embed) => {

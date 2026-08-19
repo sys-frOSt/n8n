@@ -620,6 +620,12 @@ async function handleSearchTypes(
 	return { results };
 }
 
+/**
+ * Coordinates credential setup by validating requests, presenting available credentials for selection, and handling deferred, browser-assisted, or completed setup flows.
+ *
+ * @param input - The setup requests and optional flow controls, including credential types, setup hints, and selection preferences.
+ * @returns The setup result, a suspended credential-selection request, a deferred status, or browser-assisted setup requirements.
+ */
 async function handleSetup(
 	context: InstanceAiContext,
 	input: Extract<Input, { action: 'setup' }>,

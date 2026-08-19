@@ -264,10 +264,13 @@ export type CreateCredentialFn = (
 ) => Promise<{ id: string; name: string }>;
 
 /**
- * Shared safety net around `createCredential`: missing config and a thrown
- * creation error (bad type, network failure, ...) both decline-and-log rather
- * than crash the run — a failed credential creation is no different from any
- * other unresolvable manual selection from the caller's point of view.
+ * Attempts to create a credential and reports failures without throwing.
+ *
+ * @param credentialType - The type of credential to create
+ * @param actionLabel - The raw action or label reported when creation fails
+ * @param onFailure - Optional callback invoked when creation is unavailable or fails
+ * @param options - Optional credential creation settings
+ * @returns The created credential, or `undefined` when creation is unavailable or fails
  */
 async function tryCreateCredential(
 	createCredential: CreateCredentialFn | undefined,
@@ -478,16 +481,18 @@ function resolveCredentialRequest(
 }
 
 /**
- * Parse+validate `nodeCredentialsJson` against the wizard's parse context:
- * every node key must be a known setup node, and every credential type must be
- * one that node actually requested. Same three-way `manual` behavior as the
- * standalone tool (TRUST-349): a (node, type) with existing candidates must
- * name a real one from `existingCredentials` (auto-accepted when there's only
- * one, regardless of the id string given, since there's nothing else it could
- * be); zero candidates creates a real credential instead — the model has
- * nothing to reference there, so any value in that slot signals intent to
- * engage, not a specific id. Invalid/unresolvable entries are dropped with a
- * parse-failure log rather than silently sending a bogus id through.
+ * Parses and validates credential selections for setup-wizard nodes.
+ *
+ * Unknown nodes, unrequested credential types, and unresolved credential IDs are
+ * omitted and reported through `onFailure`. Missing existing credentials are
+ * created when supported.
+ *
+ * @param json - The JSON-encoded node credential mapping
+ * @param onFailure - Callback invoked when parsing or credential resolution fails
+ * @param setupContext - Setup-wizard nodes and their requested credentials
+ * @param createCredential - Optional callback for creating missing credentials
+ * @param workingCredentialTypes - Credential types expected to authenticate successfully
+ * @returns A mapping of setup node names to resolved credential IDs
  */
 async function parseNodeCredentialsJson(
 	json: string,

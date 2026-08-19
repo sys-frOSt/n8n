@@ -25,8 +25,10 @@ type InsertedStepRow = { id: string; node_id: string; iteration: number };
 type ClaimedStepRow = { id: string; execution_id: string; node_id: string; iteration: number };
 
 /**
- * `(node_id, iteration) IN ((:n0, :i0), ...)` as a fragment + parameters, since
- * the key filter is a row-value comparison no query-builder helper covers.
+ * Builds a SQL fragment and parameter bindings for matching step node and iteration keys.
+ *
+ * @param keys - The node and iteration pairs to match
+ * @returns The SQL fragment and its named parameter bindings
  */
 function stepKeyFilter(keys: StepKey[]): {
 	fragment: string;
@@ -265,8 +267,10 @@ export class TypeOrmStepStore implements StepStore {
 const CREATION_STATUSES: readonly StepStatus[] = ['queued', 'completed', 'skipped'];
 
 /**
- * Re-checks `NewStepRecord`'s union at runtime for callers outside the type
- * system. The widened parameter keeps the checks from narrowing to `never`.
+ * Validates that a step record has a valid creation status, iteration, and output configuration.
+ *
+ * @param record - The step record to validate
+ * @throws `UnexpectedError` if the record is invalid for creation
  */
 function assertCreatableRecord(record: {
 	nodeId: string;

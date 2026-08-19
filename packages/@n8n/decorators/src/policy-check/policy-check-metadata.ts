@@ -80,14 +80,10 @@ type DecoratedPolicyCheckClass = PolicyCheckClass & {
 const KNOWN_POINT_METHODS = new Set<string>(Object.values(ENFORCEMENT_POINT_METHODS));
 
 /**
- * Rejects `on*` methods that don't match a known point.
+ * Validates that enforcement-point methods declared on a policy-check class are recognized.
  *
- * Runs when the class is defined, so a mistake is a startup error instead of a check that
- * silently does nothing.
- *
- * This only sees methods on the prototype, which is how checks are meant to be written. A
- * point written as an arrow-function property won't be spotted here, and a check with no
- * points at all shows up in the PEP's startup log instead.
+ * @param target - The policy-check class to inspect.
+ * @throws `UnknownEnforcementPointError` if the class declares an unrecognized `on*` method.
  */
 function assertPointsAreKnown(target: DecoratedPolicyCheckClass) {
 	const unknown = Object.getOwnPropertyNames(target.prototype).filter(

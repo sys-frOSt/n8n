@@ -43,6 +43,11 @@ import { TransportFactory } from './transport/TransportFactory';
  */
 const ELICITATION_TIMEOUT_MS = 300_000;
 
+/**
+ * Converts tools into MCP-compatible descriptors with strict input schemas.
+ *
+ * @returns The tool names, descriptions, and Draft 2020-12 input schemas.
+ */
 function toolDescriptors(tools: Tool[]) {
 	return tools.map((tool) => ({
 		name: tool.name,

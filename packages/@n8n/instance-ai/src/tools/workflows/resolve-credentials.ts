@@ -85,8 +85,11 @@ export interface CredentialResolutionResult {
 }
 
 /**
- * Human-readable summary of automatically attached credentials, meant to be
- * relayed on the build result so the agent knows setup is not needed for them.
+ * Builds a human-readable note describing automatically attached credentials and credential types reserved for fresh setup.
+ *
+ * @param resolvedCredentialsByNode - Credentials resolved for each workflow node
+ * @param heldForNewCredentialTypes - Credential types intentionally left unresolved for new credential creation
+ * @returns A setup note, or `undefined` when there are no resolved or held credentials to report
  */
 export function buildCredentialResolutionNote(
 	resolvedCredentialsByNode: Record<string, ResolvedCredential[]>,
@@ -143,20 +146,16 @@ export function buildCredentialResolutionNote(
 }
 
 /**
- * Resolve undefined/null credentials in the workflow JSON.
+ * Resolves workflow credential references using saved, supplied, stored, sibling, gateway, and managed OAuth credentials.
  *
- * `newCredential()` produces `NewCredentialImpl` which serializes to `undefined`
- * in `toJSON()`. Resolution strategy (in order):
- * 1. Restore from the existing workflow (preserve the user's chosen credential on updates)
- * 2. Preserve explicit valid raw credential ids
- * 3. Mock: remove the credential key and report the node in the mock metadata
+ * Unresolved credentials are removed and reported for simulation and setup. Credential types listed in
+ * `preferNewCredentialTypes` remain unresolved for fresh credential creation. Legacy mock markers are
+ * removed from `json.pinData`.
  *
- * `preferNewCredentialTypes` opts a type out of every automatic attachment: the
- * user asked for a fresh credential, so an unresolved slot of that type is
- * mocked and left for credential setup instead of being silently filled from a
- * sibling node, the saved workflow, the sole stored candidate, or n8n credits.
- *
- * Nothing is ever written into json.pinData — the saved workflow stays clean.
+ * @param workflowId - The saved workflow identifier used to restore existing credential bindings
+ * @param availableCredentials - Credentials available for automatic resolution
+ * @param preferNewCredentialTypes - Credential types that must remain open for fresh setup
+ * @returns Credential mocking, held-type, and resolved-credential metadata
  */
 export async function resolveCredentials(
 	json: WorkflowJSON,

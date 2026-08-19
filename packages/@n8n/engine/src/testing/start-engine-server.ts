@@ -3,6 +3,13 @@ import type { Server } from 'node:http';
 import type { StartExecutionService } from '../execution';
 import { createEngineServer } from '../server';
 
+/**
+ * Starts an engine server on an automatically assigned localhost port.
+ *
+ * @param startExecution - Service used to execute engine requests
+ * @returns The server URL and a function that stops the server
+ * @throws If the server address is not a TCP socket
+ */
 export async function startEngineServer(startExecution: StartExecutionService): Promise<{
 	url: string;
 	stop: () => Promise<void>;

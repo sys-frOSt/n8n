@@ -12,6 +12,12 @@ export interface EngineStores {
 	stepStore: StepStore;
 }
 
+/**
+ * Creates execution and step stores backed by the specified data source.
+ *
+ * @param dataSource - The data source providing repositories for workflow executions and steps
+ * @returns The execution and step stores
+ */
 export function createStores(dataSource: DataSource): EngineStores {
 	return {
 		executionStore: new TypeOrmExecutionStore(dataSource.getRepository(WorkflowExecution)),

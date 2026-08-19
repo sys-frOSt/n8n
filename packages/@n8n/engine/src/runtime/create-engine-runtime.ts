@@ -44,12 +44,14 @@ export interface EngineRuntime {
 }
 
 /**
- * Builds a working engine from the adapters a host chooses.
+ * Creates an engine runtime from host-provided data and execution dependencies.
  *
- * The engine keeps its internal topology here — which handler goes into which
- * worker, which queue feeds which handler, and the start and stop order — so no
- * host can get it wrong. A host keeps only its own choices: the database, the
- * admittance policy, the external dependencies and the HTTP listener.
+ * The runtime exposes an HTTP application and lifecycle methods for starting and
+ * stopping its workers. Stopping waits for in-progress work while queued
+ * in-memory work is discarded.
+ *
+ * @param options - Data source, admittance policy, and optional external dependencies.
+ * @returns The configured engine runtime.
  */
 export function createEngineRuntime({
 	dataSource,

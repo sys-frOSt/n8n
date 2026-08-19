@@ -3,7 +3,11 @@ import type { Mocked } from 'vitest';
 import { z } from 'zod';
 
 /**
- * Creates a mock Tool for testing
+ * Creates a configurable mock tool for testing.
+ *
+ * @param toolName - The name assigned to the mock tool
+ * @param opts - Optional tool description, invocation result or error, metadata, and input schema
+ * @returns A mocked tool with the configured properties and invocation behavior
  */
 export function createMockTool(
 	toolName: string,

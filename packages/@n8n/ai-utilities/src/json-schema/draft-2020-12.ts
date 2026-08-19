@@ -27,6 +27,12 @@ const SUBSCHEMA_MAP_KEYWORDS = [
 
 const DEFINITIONS_REF_PREFIX = '#/definitions/';
 
+/**
+ * Migrates each schema in a keyed collection while preserving its keys.
+ *
+ * @param subschemas - A keyed collection of schemas or another value.
+ * @returns The migrated collection, or the original value when it is not an object.
+ */
 function migrateEach(subschemas: unknown): unknown {
 	if (!isRecord(subschemas)) return subschemas;
 	return Object.fromEntries(
@@ -34,6 +40,14 @@ function migrateEach(subschemas: unknown): unknown {
 	);
 }
 
+/**
+ * Applies a draft-style exclusive bound to a migrated schema.
+ *
+ * @param result - The schema being migrated.
+ * @param inclusiveKeyword - The inclusive bound keyword to replace when needed.
+ * @param exclusiveKeyword - The corresponding exclusive bound keyword.
+ * @param exclusive - The exclusive bound value or boolean conversion flag.
+ */
 function applyBound(
 	result: Record<string, unknown>,
 	inclusiveKeyword: 'minimum' | 'maximum',
@@ -52,8 +66,10 @@ function applyBound(
 }
 
 /**
- * Walks by keyword rather than by shape, so a property named `items` or
- * `definitions` is never mistaken for the keyword of the same name.
+ * Migrates a schema value to JSON Schema 2020-12 syntax.
+ *
+ * @param schema - The schema value to migrate.
+ * @returns The migrated schema value.
  */
 function migrate(schema: unknown): unknown {
 	// `true`/`false` are valid schemas, and a malformed document can put anything
@@ -107,12 +123,10 @@ function migrate(schema: unknown): unknown {
 }
 
 /**
- * Rewrites a draft-04/06/07 JSON Schema document as JSON Schema 2020-12, the
- * dialect MCP recommends and requires every client to support. draft-07 is the
- * only dialect `zod-to-json-schema` can emit, so that is the path in use here.
+ * Converts a JSON Schema document to JSON Schema 2020-12.
  *
- * Output matches `z.toJSONSchema(schema, { target: 'draft-2020-12' })` from Zod v4,
- * when we migrate to Zod v4, we can remove this and use the built-in toJSONSchema() instead.
+ * @param schema - The JSON Schema document to migrate
+ * @returns The migrated JSON Schema 2020-12 document
  */
 export function toDraft202012(schema: unknown): Record<string, unknown> {
 	const migrated = migrate(schema);

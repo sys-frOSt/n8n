@@ -8,6 +8,12 @@ import type { WorkflowSetupSection } from '../workflowSetup.types';
 import { buildSectionId } from '../workflowSetup.helpers';
 import { AI_GATEWAY_MANAGED_TAG } from '../../constants';
 
+/**
+ * Builds workflow setup sections from the provided setup requests.
+ *
+ * @param setupRequests - Workflow nodes that require credential or parameter setup
+ * @returns An object containing the computed workflow setup sections
+ */
 export function useWorkflowSetupSections(
 	setupRequests: Ref<InstanceAiWorkflowSetupNode[]> | ComputedRef<InstanceAiWorkflowSetupNode[]>,
 ): { sections: ComputedRef<WorkflowSetupSection[]> } {

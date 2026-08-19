@@ -60,6 +60,13 @@ export interface StepKey {
 /** A step key in the string form that keys instance-keyed lookups. */
 export type StepKeyId = string;
 
+/**
+ * Formats a step key as a lookup identifier.
+ *
+ * @param nodeId - The node identifier
+ * @param iteration - The step iteration number
+ * @returns The step key identifier in the `nodeId@iteration` format
+ */
 export function stepKeyId({ nodeId, iteration }: StepKey): StepKeyId {
 	return `${nodeId}@${iteration}`;
 }
